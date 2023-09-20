@@ -42,12 +42,34 @@ classdef app1_exported < matlab.apps.AppBase
         PilihFileCitraButton_2         matlab.ui.control.Button
         CitramasukanLabel_2            matlab.ui.control.Label
         ImageAxes_2                    matlab.ui.control.UIAxes
+        PerataanHistogramTab           matlab.ui.container.Tab
+        PreviewCitraMasukanLabel_3     matlab.ui.control.Label
+        PathInfoLabel_3                matlab.ui.control.Label
+        PathcitraLabel_3               matlab.ui.control.Label
+        TampilkanHasilButton           matlab.ui.control.Button
+        PilihFileCitraButton_3         matlab.ui.control.Button
+        CitramasukanLabel_3            matlab.ui.control.Label
+        ImageAxes_3                    matlab.ui.control.UIAxes
+        HistogramSpecificationTab      matlab.ui.container.Tab
+        PathInfoLabel_5                matlab.ui.control.Label
+        PathcitraacuanLabel            matlab.ui.control.Label
+        PilihFileAcuanButton           matlab.ui.control.Button
+        CitraacuanLabel                matlab.ui.control.Label
+        PreviewCitraAcuanLabel         matlab.ui.control.Label
+        PreviewCitraMasukanLabel_4     matlab.ui.control.Label
+        PathInfoLabel_4                matlab.ui.control.Label
+        PathcitraLabel_4               matlab.ui.control.Label
+        TampilkanHasilButton_2         matlab.ui.control.Button
+        PilihFileCitraButton_4         matlab.ui.control.Button
+        CitramasukanLabel_4            matlab.ui.control.Label
+        ImageAxes_5                    matlab.ui.control.UIAxes
+        ImageAxes_4                    matlab.ui.control.UIAxes
     end
 
     
     methods (Access = public)
-        
-        function imagehistogram(~,img,name)
+
+        function [resultGray, resultR, resultG, resultB] = getimagehistogram(~, img)
             % Menghitung histogram
             if size(img, 3) == 1
                 % Citra Grayscale
@@ -59,11 +81,10 @@ classdef app1_exported < matlab.apps.AppBase
                     end
                 end
 
-                % Menampilkan histogram Grayscale dalam jendela popup
-                figure('Name', ['Histogram Citra Grayscale dari',' ', name], 'NumberTitle', 'off');
-                bar(histValues);
-                xlabel('Derajat Keabuan');
-                ylabel('Frekuensi');
+                resultGray = histValues;
+                resultR = 0;
+                resultG = 0;
+                resultB = 0;
 
             else
                % Citra Berwarna
@@ -80,6 +101,28 @@ classdef app1_exported < matlab.apps.AppBase
                         histValuesB(intensityB) = histValuesB(intensityB) + 1;
                     end
                 end
+
+                resultGray = 0;
+                resultR = histValuesR;
+                resultG = histValuesG;
+                resultB = histValuesB;
+
+            end
+        end
+
+        function imagehistogram(app,img,name)
+            if size(img, 3) == 1
+                [histValues, ~, ~, ~] = app.getimagehistogram(img);
+
+                % Menampilkan histogram Grayscale dalam jendela popup
+                figure('Name', ['Histogram Citra Grayscale dari',' ', name], 'NumberTitle', 'off');
+                bar(histValues);
+                xlabel('Derajat Keabuan');
+                ylabel('Frekuensi');
+
+            else
+                [~, histValuesR, histValuesG, histValuesB] = app.getimagehistogram(img);
+
                 % Menampilkan histogram Citra Berwarna
                 figure('Name', ['Histogram Citra Berwarna dari',' ', name], 'NumberTitle', 'off');
                 subplot(3, 1, 1);
@@ -100,6 +143,67 @@ classdef app1_exported < matlab.apps.AppBase
             end
         end
 
+        function [result, histRataGray, histRataR, histRataG, histRataB] = perataanhistogram(app,img)
+            newimage = uint8(zeros(size(img, 1), size(img, 2)));
+            totalpixel = (size(img, 1) * size(img, 2));
+            if size(img, 3) == 1
+                [histGray, ~, ~, ~] = app.getimagehistogram(img);
+
+                histEqGray = zeros(1, 256);
+                sum = 0.0;
+                for i = 1:256
+                    sum = sum + histGray(i);
+                    prob = sum / totalpixel;
+                    histEqGray(i) = round(255 * prob);
+                end
+
+                for i = 1:size(img, 1)
+                    for j = 1:size(img, 2)
+                        newimage(i,j) = histEqGray(img(i,j)+1);
+                    end
+                end
+
+                histRataGray = histEqGray;
+                histRataR = 0;
+                histRataG = 0;
+                histRataB = 0;
+            else
+                [~, histR, histG, histB] = app.getimagehistogram(img);
+
+                histEqR = zeros(1, 256);
+                histEqG = zeros(1, 256);
+                histEqB = zeros(1, 256);
+                sumR = 0.0;
+                sumG = 0.0;
+                sumB = 0.0;
+                for i = 1:256
+                    sumR = sumR + histR(i);
+                    sumG = sumG + histG(i);
+                    sumB = sumB + histB(i);
+                    probR = sumR / totalpixel;
+                    probG = sumG / totalpixel;
+                    probB = sumB / totalpixel;
+                    histEqR(i) = round(255 * probR);
+                    histEqG(i) = round(255 * probG);
+                    histEqB(i) = round(255 * probB);
+                end
+
+                for i = 1:size(img, 1)
+                    for j = 1:size(img, 2)
+                        newimage(i, j, 1) = histEqR(img(i, j, 1) + 1);
+                        newimage(i, j, 2) = histEqR(img(i, j, 2) + 1);
+                        newimage(i, j, 3) = histEqR(img(i, j, 3) + 1);
+                    end
+                end
+
+                histRataGray = 0;
+                histRataR = histEqR;
+                histRataG = histEqG;
+                histRataB = histEqB;
+            end
+            result = newimage;
+        end
+
         function perbandinganduacitra(app, fig_title, img1, img2)
             figure("Name", fig_title,'NumberTitle', 'off')
             if (size(img1,1) >= size(img1,2))
@@ -116,11 +220,84 @@ classdef app1_exported < matlab.apps.AppBase
                 subplot(2,1,2);
             end
             imshow(img2);
-            title('Citra Hasil')
+            title('Citra Hasil');
             
             % Menampilkan histogram pada masing-masing citra
-            app.imagehistogram(img1, 'Citra Masukan')
-            app.imagehistogram(img2, 'Citra Hasil')
+            app.imagehistogram(img1, 'Citra Masukan');
+            app.imagehistogram(img2, 'Citra Hasil');
+        end
+
+        function result = spesifikasihistogram(app,img,imgacuan)
+            newimage = uint8(zeros(size(img, 1), size(img, 2)));
+
+            % Pemisahan antara gambar grayscale dan berwarna
+            if size(img, 3) == 1
+                % Mengambil histogram yang sudah diratakan untuk grayscale
+                [~, hist, ~, ~, ~] = perataanhistogram(app, img);
+                [~, histAcuan, ~, ~, ~] = perataanhistogram(app, imgacuan);
+                histRes = zeros(1, 256);
+
+                % Melakukan transformasi pada image input
+                for i = 1:256
+                    minval = abs(hist(i) - histAcuan(1));
+                    minj = 0;
+                    for j = 1:256
+                        if abs(hist(i) - histAcuan(j)) < minval
+                            minval = abs(hist(i) - histAcuan(j));
+                            minj = j;
+                        end
+                    end
+                    histRes(i) = minj;
+                end
+
+                for i = 1:size(img, 1)
+                    for j = 1:size(img, 2)
+                        newimage(i,j) = histRes(img(i,j)+1);
+                    end
+                end
+            else
+                % Mengambil histogram yang sudah diratakan untuk image
+                % berwarna
+                [~, ~, histR, histG, histB] = perataanhistogram(app, img);
+                [~, ~, histAcuanR, histAcuanG, histAcuanB] = perataanhistogram(app, imgacuan);
+                histResR = zeros(1, 256);
+                histResG = zeros(1, 256);
+                histResB = zeros(1, 256);
+
+                % Melakukan transformasi pada image input
+                for i = 1:256
+                    doneR = false;
+                    doneG = false;
+                    doneB = false;
+                    for j = 1:256
+                        if histR(i) < histAcuanR(j) & ~doneR
+                            histResR(i) = j;
+                            doneR = true;
+                        end
+                        if histG(i) < histAcuanG(j) & ~doneG
+                            histResG(i) = j;
+                            doneG = true;
+                        end
+                        if histB(i) < histAcuanB(j) & ~doneB
+                            histResB(i) = j;
+                            doneB = true;
+                        end
+                        if doneR & doneG & doneB
+                            break;
+                        end
+                    end
+                end
+
+                % Mentransformasi hasil spesifikasi histogram pada gambar
+                for i = 1:size(img, 1)
+                    for j = 1:size(img, 2)
+                        newimage(i, j, 1) = histResR(img(i, j, 1) + 1);
+                        newimage(i, j, 2) = histResG(img(i, j, 2) + 1);
+                        newimage(i, j, 3) = histResB(img(i, j, 3) + 1);
+                    end
+                end
+            end
+            result = newimage;
         end
 
         function results = pencerahancitra(~,img, a, b)
@@ -199,7 +376,7 @@ classdef app1_exported < matlab.apps.AppBase
     methods (Access = private)
 
         % Button pushed function: PilihFileCitraButton
-        function PilihFileCitraButtonPushed(app, ~)
+        function PilihFileCitraButtonPushed(app, event)
             % Memilih gambar
             [fileName, pathName] = uigetfile({'*.png; *.jpg; *.jpeg; *.bmp; *.tif;', 'All Image Files'});
             fullPath = fullfile(pathName, fileName);
@@ -217,7 +394,7 @@ classdef app1_exported < matlab.apps.AppBase
         end
 
         % Button pushed function: TampilkanHistogramButton
-        function TampilkanHistogramButtonPushed(app, ~)
+        function TampilkanHistogramButtonPushed(app, event)
             % Memeriksa apakah ada gambar yang dipilih
             if isempty(app.PathInfoLabel.Text)
                 msgbox('Pilih terlebih dahulu gambar sebelum menampilkan histogram.', 'Peringatan', 'warn');
@@ -232,7 +409,7 @@ classdef app1_exported < matlab.apps.AppBase
         end
 
         % Button pushed function: PilihFileCitraButton_2
-        function PilihFileCitraButton_2Pushed(app, ~)
+        function PilihFileCitraButton_2Pushed(app, event)
             % Memilih gambar
             [fileName, pathName] = uigetfile({'*.png; *.jpg; *.jpeg; *.bmp; *.tif;', 'All Image Files'});
             fullPath = fullfile(pathName, fileName);
@@ -260,7 +437,7 @@ classdef app1_exported < matlab.apps.AppBase
         end
 
         % Button pushed function: ProsesPencerahanCitraButton
-        function ProsesPencerahanCitraButtonPushed(app, ~)
+        function ProsesPencerahanCitraButtonPushed(app, event)
             % Mendapatkan citra masukan dari path
             img = imread(app.PathInfoLabel_2.Text);
             
@@ -275,7 +452,7 @@ classdef app1_exported < matlab.apps.AppBase
         end
 
         % Button pushed function: ProsesBalikanCitraButton
-        function ProsesBalikanCitraButtonPushed(app, ~)
+        function ProsesBalikanCitraButtonPushed(app, event)
             % Mendapatkan citra masukan dari path
             img = imread(app.PathInfoLabel_2.Text);
             
@@ -287,7 +464,7 @@ classdef app1_exported < matlab.apps.AppBase
         end
 
         % Button pushed function: ProsesTransformasiLogButton
-        function ProsesTransformasiLogButtonPushed(app, ~)
+        function ProsesTransformasiLogButtonPushed(app, event)
             % Mendapatkan citra masukan dari path
             img = imread(app.PathInfoLabel_2.Text);
             
@@ -300,7 +477,7 @@ classdef app1_exported < matlab.apps.AppBase
         end
 
         % Button pushed function: ProsesTransformasiPangkatButton
-        function ProsesTransformasiPangkatButtonPushed(app, ~)
+        function ProsesTransformasiPangkatButtonPushed(app, event)
             % Mendapatkan citra masukan dari path
             img = imread(app.PathInfoLabel_2.Text);
             
@@ -314,7 +491,7 @@ classdef app1_exported < matlab.apps.AppBase
         end
 
         % Button pushed function: ProsesPereganganKontrasButton
-        function ProsesPereganganKontrasButtonPushed(app, ~)
+        function ProsesPereganganKontrasButtonPushed(app, event)
             % Mendapatkan citra masukan dari path
             img = imread(app.PathInfoLabel_2.Text);
             
@@ -323,6 +500,105 @@ classdef app1_exported < matlab.apps.AppBase
 
             % Menampilkan perbandingan citra asli dan hasil transformasi
             app.perbandinganduacitra('Perbandingan Hasil Peregangan Kontras', img, result);
+        end
+
+        % Button pushed function: TampilkanHasilButton
+        function TampilkanHasilButtonPushed(app, event)
+            % Memeriksa apakah ada gambar yang dipilih
+            if isempty(app.PathInfoLabel_3.Text)
+                msgbox('Pilih terlebih dahulu gambar sebelum menampilkan histogram.', 'Peringatan', 'warn');
+                return; % Keluar dari callback jika tidak ada gambar yang dipilih
+            end
+            
+            % Mendapatkan citra dari path
+            img = imread(app.PathInfoLabel_3.Text);
+
+            % Menampilkan necessary output
+            [newimage, ~, ~, ~, ~] = app.perataanhistogram(img);
+
+            figure('Name', 'Citra Hasil Perataan', 'NumberTitle', 'off'); imshow(newimage);
+            figure('Name', 'Citra Input', 'NumberTitle', 'off'); imshow(img);
+            app.imagehistogram(newimage, 'Citra Hasil Perataan');
+            app.imagehistogram(img, 'Citra Input');
+        end
+
+        % Button pushed function: PilihFileCitraButton_3
+        function PilihFileCitraButton_3Pushed(app, event)
+            % Memilih gambar
+            [fileName, pathName] = uigetfile({'*.png; *.jpg; *.jpeg; *.bmp; *.tif;', 'All Image Files'});
+            fullPath = fullfile(pathName, fileName);
+
+            if fileName ~= 0
+                % Menampilkan path file di label
+                app.PathInfoLabel_3.Text = fullPath;
+
+                % Menampilkan citra di axes
+                imshow(fullPath, 'Parent', app.ImageAxes_3);
+
+                % Mengaktifkan tombol Tampilkan Histogram jika gambar dipilih
+                app.TampilkanHasilButton.Enable = 'on';
+            end
+        end
+
+        % Button pushed function: PilihFileCitraButton_4
+        function PilihFileCitraButton_4Pushed(app, event)
+             % Memilih gambar
+            [fileName, pathName] = uigetfile({'*.png; *.jpg; *.jpeg; *.bmp; *.tif;', 'All Image Files'});
+            fullPath = fullfile(pathName, fileName);
+
+            if fileName ~= 0
+                % Menampilkan path file di label
+                app.PathInfoLabel_4.Text = fullPath;
+
+                % Menampilkan citra di axes
+                imshow(fullPath, 'Parent', app.ImageAxes_4);
+
+                % Mengaktifkan tombol Tampilkan Histogram jika gambar dipilih
+                if ~isempty(app.PathInfoLabel_5.Text)
+                    app.TampilkanHasilButton.Enable = 'on';
+                end
+            end
+        end
+
+        % Button pushed function: PilihFileAcuanButton
+        function PilihFileAcuanButtonPushed(app, event)
+             % Memilih gambar
+            [fileName, pathName] = uigetfile({'*.png; *.jpg; *.jpeg; *.bmp; *.tif;', 'All Image Files'});
+            fullPath = fullfile(pathName, fileName);
+
+            if fileName ~= 0
+                % Menampilkan path file di label
+                app.PathInfoLabel_5.Text = fullPath;
+
+                % Menampilkan citra di axes
+                imshow(fullPath, 'Parent', app.ImageAxes_5);
+
+                % Mengaktifkan tombol Tampilkan Histogram jika gambar dipilih
+                if ~isempty(app.PathInfoLabel_4.Text)
+                    app.TampilkanHasilButton_2.Enable = 'on';
+                end
+            end
+        end
+
+        % Button pushed function: TampilkanHasilButton_2
+        function TampilkanHasilButton_2Pushed(app, event)
+            img = imread(app.PathInfoLabel_4.Text);
+            imgacuan = imread(app.PathInfoLabel_5.Text);
+            
+            % Pengecekan tipe gambar dan ukuran
+            if size(img, 3) ~= size(imgacuan, 3)
+                msgbox('Tipe gambar haruslah sama.', 'Peringatan', 'warn');
+                return;
+            end
+
+            result = app.spesifikasihistogram(img, imgacuan);
+
+            figure('Name', 'Citra Hasil Spesifikasi', 'NumberTitle', 'off'); imshow(result);
+            figure('Name', 'Citra Input', 'NumberTitle', 'off'); imshow(img);
+            figure('Name', 'Citra Acuan', 'NumberTitle', 'off'); imshow(imgacuan);
+            app.imagehistogram(result, 'Citra Hasil Spesifikasi');
+            app.imagehistogram(img, 'Citra Input');
+            app.imagehistogram(imgacuan, 'Citra Acuan');
         end
     end
 
@@ -556,6 +832,124 @@ classdef app1_exported < matlab.apps.AppBase
             app.ProsesPereganganKontrasButton.Enable = 'off';
             app.ProsesPereganganKontrasButton.Position = [13 11 166 23];
             app.ProsesPereganganKontrasButton.Text = 'Proses Peregangan Kontras';
+
+            % Create PerataanHistogramTab
+            app.PerataanHistogramTab = uitab(app.TabGroup);
+            app.PerataanHistogramTab.Title = 'Perataan Histogram';
+
+            % Create ImageAxes_3
+            app.ImageAxes_3 = uiaxes(app.PerataanHistogramTab);
+            app.ImageAxes_3.XTick = [];
+            app.ImageAxes_3.YTick = [];
+            app.ImageAxes_3.Position = [42 22 649 423];
+
+            % Create CitramasukanLabel_3
+            app.CitramasukanLabel_3 = uilabel(app.PerataanHistogramTab);
+            app.CitramasukanLabel_3.Position = [41 531 86 22];
+            app.CitramasukanLabel_3.Text = 'Citra masukan:';
+
+            % Create PilihFileCitraButton_3
+            app.PilihFileCitraButton_3 = uibutton(app.PerataanHistogramTab, 'push');
+            app.PilihFileCitraButton_3.ButtonPushedFcn = createCallbackFcn(app, @PilihFileCitraButton_3Pushed, true);
+            app.PilihFileCitraButton_3.Position = [133 531 100 23];
+            app.PilihFileCitraButton_3.Text = 'Pilih File Citra';
+
+            % Create TampilkanHasilButton
+            app.TampilkanHasilButton = uibutton(app.PerataanHistogramTab, 'push');
+            app.TampilkanHasilButton.ButtonPushedFcn = createCallbackFcn(app, @TampilkanHasilButtonPushed, true);
+            app.TampilkanHasilButton.Enable = 'off';
+            app.TampilkanHasilButton.Position = [531 531 127 23];
+            app.TampilkanHasilButton.Text = 'Tampilkan Hasil';
+
+            % Create PathcitraLabel_3
+            app.PathcitraLabel_3 = uilabel(app.PerataanHistogramTab);
+            app.PathcitraLabel_3.Position = [41 502 59 22];
+            app.PathcitraLabel_3.Text = 'Path citra:';
+
+            % Create PathInfoLabel_3
+            app.PathInfoLabel_3 = uilabel(app.PerataanHistogramTab);
+            app.PathInfoLabel_3.Position = [111 502 441 22];
+            app.PathInfoLabel_3.Text = '';
+
+            % Create PreviewCitraMasukanLabel_3
+            app.PreviewCitraMasukanLabel_3 = uilabel(app.PerataanHistogramTab);
+            app.PreviewCitraMasukanLabel_3.Position = [306 456 128 22];
+            app.PreviewCitraMasukanLabel_3.Text = 'Preview Citra Masukan';
+
+            % Create HistogramSpecificationTab
+            app.HistogramSpecificationTab = uitab(app.TabGroup);
+            app.HistogramSpecificationTab.Title = 'Histogram Specification';
+
+            % Create ImageAxes_4
+            app.ImageAxes_4 = uiaxes(app.HistogramSpecificationTab);
+            app.ImageAxes_4.XTick = [];
+            app.ImageAxes_4.YTick = [];
+            app.ImageAxes_4.Position = [25 22 340 381];
+
+            % Create ImageAxes_5
+            app.ImageAxes_5 = uiaxes(app.HistogramSpecificationTab);
+            app.ImageAxes_5.XTick = [];
+            app.ImageAxes_5.YTick = [];
+            app.ImageAxes_5.Position = [364 22 340 381];
+
+            % Create CitramasukanLabel_4
+            app.CitramasukanLabel_4 = uilabel(app.HistogramSpecificationTab);
+            app.CitramasukanLabel_4.Position = [41 531 86 22];
+            app.CitramasukanLabel_4.Text = 'Citra masukan:';
+
+            % Create PilihFileCitraButton_4
+            app.PilihFileCitraButton_4 = uibutton(app.HistogramSpecificationTab, 'push');
+            app.PilihFileCitraButton_4.ButtonPushedFcn = createCallbackFcn(app, @PilihFileCitraButton_4Pushed, true);
+            app.PilihFileCitraButton_4.Position = [133 531 100 23];
+            app.PilihFileCitraButton_4.Text = 'Pilih File Citra';
+
+            % Create TampilkanHasilButton_2
+            app.TampilkanHasilButton_2 = uibutton(app.HistogramSpecificationTab, 'push');
+            app.TampilkanHasilButton_2.ButtonPushedFcn = createCallbackFcn(app, @TampilkanHasilButton_2Pushed, true);
+            app.TampilkanHasilButton_2.Enable = 'off';
+            app.TampilkanHasilButton_2.Position = [531 531 127 23];
+            app.TampilkanHasilButton_2.Text = 'Tampilkan Hasil';
+
+            % Create PathcitraLabel_4
+            app.PathcitraLabel_4 = uilabel(app.HistogramSpecificationTab);
+            app.PathcitraLabel_4.Position = [41 502 59 22];
+            app.PathcitraLabel_4.Text = 'Path citra:';
+
+            % Create PathInfoLabel_4
+            app.PathInfoLabel_4 = uilabel(app.HistogramSpecificationTab);
+            app.PathInfoLabel_4.Position = [146 502 406 22];
+            app.PathInfoLabel_4.Text = '';
+
+            % Create PreviewCitraMasukanLabel_4
+            app.PreviewCitraMasukanLabel_4 = uilabel(app.HistogramSpecificationTab);
+            app.PreviewCitraMasukanLabel_4.Position = [127 402 128 22];
+            app.PreviewCitraMasukanLabel_4.Text = 'Preview Citra Masukan';
+
+            % Create PreviewCitraAcuanLabel
+            app.PreviewCitraAcuanLabel = uilabel(app.HistogramSpecificationTab);
+            app.PreviewCitraAcuanLabel.Position = [496 402 113 22];
+            app.PreviewCitraAcuanLabel.Text = 'Preview Citra Acuan';
+
+            % Create CitraacuanLabel
+            app.CitraacuanLabel = uilabel(app.HistogramSpecificationTab);
+            app.CitraacuanLabel.Position = [41 473 70 22];
+            app.CitraacuanLabel.Text = 'Citra acuan:';
+
+            % Create PilihFileAcuanButton
+            app.PilihFileAcuanButton = uibutton(app.HistogramSpecificationTab, 'push');
+            app.PilihFileAcuanButton.ButtonPushedFcn = createCallbackFcn(app, @PilihFileAcuanButtonPushed, true);
+            app.PilihFileAcuanButton.Position = [133 473 100 23];
+            app.PilihFileAcuanButton.Text = 'Pilih File Acuan';
+
+            % Create PathcitraacuanLabel
+            app.PathcitraacuanLabel = uilabel(app.HistogramSpecificationTab);
+            app.PathcitraacuanLabel.Position = [41 444 96 22];
+            app.PathcitraacuanLabel.Text = 'Path citra acuan:';
+
+            % Create PathInfoLabel_5
+            app.PathInfoLabel_5 = uilabel(app.HistogramSpecificationTab);
+            app.PathInfoLabel_5.Position = [146 444 406 22];
+            app.PathInfoLabel_5.Text = '';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
